@@ -1,0 +1,426 @@
+import { showToast } from './toast.js';
+
+export class ResultsViewer {
+  constructor(container, onExecuteSnippet, onJumpToLine) {
+    this.container = container;
+    this.onExecuteSnippet = onExecuteSnippet;
+    this.onJumpToLine = onJumpToLine;
+    this.currentResult = null;
+    this.sortState = {};
+    this.filterState = {};
+  }
+
+  renderInitialState() {
+    const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+    const runKey = isMac ? '⌘↵' : 'Ctrl+↵';
+    const formatKey = isMac ? '⌥⇧F' : 'Alt+Shift+F';
+
+    this.container.innerHTML = `
+      <div class="results-empty-hero">
+        <div class="empty-icon-container">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+          </svg>
+        </div>
+
+        <div class="empty-text-group">
+          <h3 class="results-hero-title">Ready to run queries</h3>
+          <p class="results-hero-caption">
+            Write or paste SQL in the editor to query the in-browser database.
+          </p>
+        </div>
+
+        <div class="empty-hints-bar">
+          <span class="empty-hint-item">
+            <kbd class="empty-kbd">${runKey}</kbd> Run
+          </span>
+          <span class="empty-hint-sep"></span>
+          <span class="empty-hint-item">
+            <kbd class="empty-kbd">${formatKey}</kbd> Format
+          </span>
+          <span class="empty-hint-sep"></span>
+          <span class="empty-hint-item">
+            <span class="empty-dot-active"></span> PG 16 WASM
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  renderLoading() {
+    this.container.innerHTML = `
+      <div class="results-loading-state">
+        <span class="spinner-lg"></span>
+        <div class="loading-text-col">
+          <span class="loading-title">Executing PostgreSQL query...</span>
+          <span class="loading-sub">Processing via in-browser WASM engine</span>
+        </div>
+      </div>
+    `;
+  }
+
+  renderError(errorObj, totalDuration, onResetDb) {
+    const line = errorObj.line;
+    const col = errorObj.column;
+    const snippet = errorObj.snippet;
+
+    this.container.innerHTML = `
+      <div class="results-wrapper">
+        <div class="results-header-bar results-header-error">
+          <div class="results-meta-left">
+            <span class="status-badge-err">Error</span>
+            <span class="meta-count">Execution Failed</span>
+            <span class="meta-dot">•</span>
+            <span class="meta-duration">${totalDuration}ms</span>
+            ${line ? `
+              <span class="meta-dot">•</span>
+              <span class="error-line-badge" id="btn-jump-to-error" title="Click to jump to line ${line} in editor">
+                Line ${line}${col ? `:${col}` : ''}
+              </span>
+            ` : ''}
+          </div>
+          ${line ? `
+            <button class="btn btn-xs btn-secondary" id="btn-jump-editor-action">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+              Jump to Line ${line}
+            </button>
+          ` : ''}
+        </div>
+
+        <div class="results-error-banner">
+          <div class="error-header">
+            <div class="error-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>Query Execution Error</span>
+            </div>
+            ${line ? `<span class="duration-tag">Line ${line}${col ? ` : Col ${col}` : ''}</span>` : `<span class="duration-tag">${totalDuration}ms</span>`}
+          </div>
+
+          <div class="error-message-box">
+            <code>${escapeHtml(errorObj.message)}</code>
+          </div>
+
+          ${snippet ? `
+            <div class="error-snippet-box">
+              <div class="snippet-header">At line ${line}:</div>
+              <pre class="snippet-code"><code>${escapeHtml(snippet)}</code></pre>
+            </div>
+          ` : ''}
+
+          ${errorObj.friendlyExplanation ? `
+            <div class="error-beginner-tip">
+              <div class="tip-header">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Diagnostic Recommendation</span>
+              </div>
+              <p class="tip-text">${escapeHtml(errorObj.friendlyExplanation)}</p>
+              ${errorObj.hint ? `<p class="tip-hint">${escapeHtml(errorObj.hint)}</p>` : ''}
+            </div>
+          ` : ''}
+
+          ${errorObj.message && errorObj.message.includes('already exists') && onResetDb ? `
+            <div style="margin-top: 10px;">
+              <button class="btn btn-secondary" id="btn-quick-reset-db">
+                Reset Database &amp; Re-run
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+
+    const quickResetBtn = this.container.querySelector('#btn-quick-reset-db');
+    if (quickResetBtn && onResetDb) {
+      quickResetBtn.addEventListener('click', onResetDb);
+    }
+
+    const jumpBtn = this.container.querySelector('#btn-jump-editor-action');
+    if (jumpBtn && line && this.onJumpToLine) {
+      jumpBtn.addEventListener('click', () => this.onJumpToLine(line));
+    }
+    const jumpBadge = this.container.querySelector('#btn-jump-to-error');
+    if (jumpBadge && line && this.onJumpToLine) {
+      jumpBadge.addEventListener('click', () => this.onJumpToLine(line));
+    }
+  }
+
+  renderResults(executionData) {
+    this.currentResult = executionData;
+    const { results, totalDuration, statementCount } = executionData;
+
+    if (!results || results.length === 0) {
+      this.renderInitialState();
+      return;
+    }
+
+    let html = `
+      <div class="results-wrapper">
+        <div class="results-header-bar">
+          <div class="results-meta-left">
+            <span class="status-badge-ok">Success</span>
+            <span class="meta-count"><strong>${statementCount}</strong> ${statementCount === 1 ? 'statement' : 'statements'}</span>
+            <span class="meta-dot">•</span>
+            <span class="meta-duration">${totalDuration}ms</span>
+          </div>
+        </div>
+
+        <div class="statements-stream">
+    `;
+
+    results.forEach((res, idx) => {
+      html += this.renderStatementCard(res, idx);
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    this.container.innerHTML = html;
+    this.attachEventListeners(results);
+  }
+
+  renderStatementCard(res, idx) {
+    const isSelect = res.isSelect;
+    const type = res.type || 'QUERY';
+    const rows = res.rows || [];
+
+    return `
+      <div class="statement-card" data-index="${idx}">
+        <div class="statement-card-header">
+          <div class="statement-title-group">
+            <span class="statement-type-pill ${this.getPillClass(type)}">${escapeHtml(type)}</span>
+            <code class="statement-sql-snippet" title="${escapeHtml(res.sql)}">${escapeHtml(this.truncateSnippet(res.sql))}</code>
+          </div>
+
+          <div class="statement-metrics">
+            ${isSelect ? `
+              <span class="metric-rows-tag">${rows.length} ${rows.length === 1 ? 'row' : 'rows'}</span>
+              <input type="text" class="table-filter-input" data-idx="${idx}" placeholder="Filter results..." autocomplete="off" />
+              <button class="btn-export-tag btn-copy-csv" data-idx="${idx}" title="Copy CSV to clipboard">CSV</button>
+              <button class="btn-export-tag btn-copy-json" data-idx="${idx}" title="Copy JSON to clipboard">JSON</button>
+            ` : `
+              <span class="metric-rows-tag tag-affected">
+                ${res.affectedRows > 0 ? `${res.affectedRows} affected` : 'OK'}
+              </span>
+            `}
+          </div>
+        </div>
+
+        ${isSelect ? `
+          <div class="statement-table-container" id="table-container-${idx}">
+            ${this.renderDataTable(res, idx)}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  renderDataTable(res, idx) {
+    const fields = res.fields || [];
+    let rows = res.rows || [];
+
+    if (rows.length === 0) {
+      return `<div style="padding: 18px 12px; text-align: center; color: var(--text-muted); font-size: 11px;">0 rows returned</div>`;
+    }
+
+    const queryFilter = (this.filterState[idx] || '').toLowerCase().trim();
+    if (queryFilter) {
+      rows = rows.filter(row => {
+        return Object.values(row).some(v => String(v ?? '').toLowerCase().includes(queryFilter));
+      });
+    }
+
+    const sort = this.sortState[idx];
+    if (sort && sort.col) {
+      rows = [...rows].sort((a, b) => {
+        const valA = a[sort.col];
+        const valB = b[sort.col];
+        if (valA === valB) return 0;
+        if (valA === null || valA === undefined) return 1;
+        if (valB === null || valB === undefined) return -1;
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return sort.dir === 'asc' ? valA - valB : valB - valA;
+        }
+        return sort.dir === 'asc' 
+          ? String(valA).localeCompare(String(valB)) 
+          : String(valB).localeCompare(String(valA));
+      });
+    }
+
+    let html = `
+      <table class="pg-data-table">
+        <thead>
+          <tr>
+            <th class="col-index">#</th>
+    `;
+
+    for (const field of fields) {
+      const isSorted = sort && sort.col === field.name;
+      const sortArrow = isSorted ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : '';
+      html += `
+        <th class="col-sortable ${isSorted ? 'is-sorted' : ''}" data-col="${escapeHtml(field.name)}" data-idx="${idx}" title="Sort by ${escapeHtml(field.name)}">
+          <div class="th-content">
+            <span class="col-name">${escapeHtml(field.name)}${sortArrow}</span>
+            <span class="col-type-tag">${escapeHtml(field.dataType || '')}</span>
+          </div>
+        </th>
+      `;
+    }
+
+    html += `
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    rows.forEach((row, rowIdx) => {
+      html += `<tr><td class="col-index">${rowIdx + 1}</td>`;
+      for (const field of fields) {
+        const val = row[field.name];
+        html += `<td class="cell-val ${this.getCellTypeClass(val)}" title="${escapeHtml(this.formatCellValue(val))}">${escapeHtml(this.formatCellValue(val))}</td>`;
+      }
+      html += `</tr>`;
+    });
+
+    html += `
+        </tbody>
+      </table>
+    `;
+
+    return html;
+  }
+
+  attachEventListeners(results) {
+    this.container.querySelectorAll('.col-sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.getAttribute('data-col');
+        const idx = parseInt(th.getAttribute('data-idx'), 10);
+        const current = this.sortState[idx];
+        let nextDir = 'asc';
+        if (current && current.col === col) {
+          nextDir = current.dir === 'asc' ? 'desc' : 'asc';
+        }
+        this.sortState[idx] = { col, dir: nextDir };
+        this.updateTable(idx, results);
+      });
+    });
+
+    this.container.querySelectorAll('.table-filter-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const idx = parseInt(input.getAttribute('data-idx'), 10);
+        this.filterState[idx] = e.target.value;
+        this.updateTable(idx, results);
+      });
+    });
+
+    this.container.querySelectorAll('.btn-copy-csv').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-idx'), 10);
+        const res = results[idx];
+        if (res && res.rows) {
+          const csv = this.toCsv(res.fields, res.rows);
+          navigator.clipboard.writeText(csv);
+          showToast('Copied CSV to clipboard', 'info', 1500);
+        }
+      });
+    });
+
+    this.container.querySelectorAll('.btn-copy-json').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-idx'), 10);
+        const res = results[idx];
+        if (res && res.rows) {
+          const json = JSON.stringify(res.rows, null, 2);
+          navigator.clipboard.writeText(json);
+          showToast('Copied JSON to clipboard', 'info', 1500);
+        }
+      });
+    });
+  }
+
+  updateTable(idx, results) {
+    const container = this.container.querySelector(`#table-container-${idx}`);
+    if (container && results && results[idx]) {
+      container.innerHTML = this.renderDataTable(results[idx], idx);
+      // Re-bind sort listener for this table
+      container.querySelectorAll('.col-sortable').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.getAttribute('data-col');
+          const current = this.sortState[idx];
+          let nextDir = 'asc';
+          if (current && current.col === col) {
+            nextDir = current.dir === 'asc' ? 'desc' : 'asc';
+          }
+          this.sortState[idx] = { col, dir: nextDir };
+          this.updateTable(idx, results);
+        });
+      });
+    }
+  }
+
+  getPillClass(type) {
+    const t = (type || '').toUpperCase();
+    if (t === 'SELECT') return 'pill-select';
+    if (t === 'INSERT') return 'pill-insert';
+    if (t === 'UPDATE') return 'pill-update';
+    if (t === 'DELETE') return 'pill-delete';
+    if (t === 'CREATE') return 'pill-create';
+    if (t === 'DROP' || t === 'ALTER') return 'pill-alter';
+    return 'pill-default';
+  }
+
+  truncateSnippet(sql) {
+    const cleaned = (sql || '').replace(/\s+/g, ' ').trim();
+    if (cleaned.length > 70) {
+      return cleaned.slice(0, 67) + '...';
+    }
+    return cleaned;
+  }
+
+  formatCellValue(val) {
+    if (val === null || val === undefined) return 'NULL';
+    if (typeof val === 'object') return JSON.stringify(val);
+    return String(val);
+  }
+
+  getCellTypeClass(val) {
+    if (val === null || val === undefined) return 'cell-null';
+    if (typeof val === 'number') return 'cell-num';
+    if (typeof val === 'boolean') return 'cell-bool';
+    return '';
+  }
+
+  toCsv(fields, rows) {
+    if (!rows || rows.length === 0) return '';
+    const headers = fields.map(f => `"${String(f.name).replace(/"/g, '""')}"`).join(',');
+    const lines = rows.map(r => {
+      return fields.map(f => {
+        const v = r[f.name];
+        if (v === null || v === undefined) return '';
+        return `"${String(v).replace(/"/g, '""')}"`;
+      }).join(',');
+    });
+    return [headers, ...lines].join('\n');
+  }
+}
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}

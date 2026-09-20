@@ -1,0 +1,20 @@
+{
+  "name": "postgres-runner",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "lucide": "^1.47.0",
+    "monaco-editor": "^0.56.0",
+    "sql-formatter": "^15.8.2"
+  }
+}

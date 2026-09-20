@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PostgreSQL Runner</title>
+    <meta name="description" content="Authentic PostgreSQL 16 WebAssembly playground with persistent IndexedDB storage, Monaco editor, and live schema explorer." />
+    
+    <!-- Modern Sans & Mono Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app-layout">
+      <!-- Continuous Left Sidebar (Full 100vh height from top to bottom) -->
+      <aside class="app-sidebar" id="app-sidebar">
+        <!-- Sidebar Brand Header (Height 44px, aligned with top nav header) -->
+        <div class="sidebar-header">
+          <div class="brand" title="PostgreSQL 16 WebAssembly">
+            <div class="brand-icon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+              </svg>
+            </div>
+            <div class="brand-text-col">
+              <span class="brand-name">Postgres Runner</span>
+              <span class="brand-chip">WASM 16</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Explorer Section Header (Height 38px, aligned with editor & results toolbars!) -->
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">EXPLORER</span>
+          <button id="btn-refresh-schema" class="btn-icon-tiny" title="Refresh database schema">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Schema Tree Container -->
+        <div id="schema-tree-container" class="schema-scroll-area"></div>
+      </aside>
+
+      <!-- Draggable Sidebar Split Gutter -->
+      <div class="sidebar-gutter" id="sidebar-gutter" title="Drag to resize explorer sidebar"></div>
+
+      <!-- Right Side Application Container -->
+      <div class="app-workspace-container">
+        <!-- Top Navigation Header (Height 44px, aligned with sidebar header) -->
+        <header class="app-header">
+          <div class="header-left">
+            <!-- Unified Project Dropdown Switcher -->
+            <div class="project-dropdown-wrapper" id="project-dropdown-wrapper">
+              <button class="project-trigger-btn" id="btn-project-trigger" title="Switch or manage playgrounds" aria-haspopup="true" aria-expanded="false">
+                <span class="project-trigger-icon">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </span>
+                <span class="project-trigger-name" id="header-active-project-name">Employees Practice</span>
+                <svg class="project-trigger-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              <!-- Dropdown Popover Menu -->
+              <div class="project-dropdown-menu" id="project-dropdown-menu">
+                <div class="dropdown-search-box">
+                  <input type="text" id="input-search-playgrounds" placeholder="Search playgrounds..." autocomplete="off" />
+                </div>
+                <div class="dropdown-playgrounds-list" id="dropdown-playgrounds-list"></div>
+                <div class="dropdown-actions-footer">
+                  <button class="btn-dropdown-action" id="btn-dropdown-new-proj">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Playground</span>
+                  </button>
+                  <button class="btn-dropdown-action" id="btn-dropdown-manage-proj">
+                    <span>Manage All</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CENTER: Run Button Only (Dead Center) -->
+          <div class="header-center">
+            <button id="btn-run-query" class="btn-run-primary" title="Execute Query (Cmd+Enter or Ctrl+Enter)">
+              <svg class="btn-run-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Run</span>
+              <kbd class="kbd-badge">⌘↵</kbd>
+            </button>
+          </div>
+
+          <!-- END (RIGHT): Reset DB, Export, Theme Toggle -->
+          <div class="header-right">
+            <!-- Reset Database (Secondary/Outline variant) -->
+            <button id="btn-reset-db" class="btn-outline-header warning" data-tooltip="Reset Database" data-tooltip-pos="bottom">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              <span>Reset DB</span>
+            </button>
+
+            <!-- Export SQL Dump (Secondary/Outline variant) -->
+            <button id="btn-export-sql" class="btn-outline-header" data-tooltip="Export SQL Dump" data-tooltip-pos="bottom">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Export</span>
+            </button>
+
+            <button id="btn-theme-toggle" class="btn-theme-switch" data-tooltip="Toggle Light / Dark theme" data-tooltip-pos="bottom-left" aria-label="Toggle theme">
+              <svg id="theme-icon-sun" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg id="theme-icon-moon" style="display:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Main Workspace (Editor + Results Panes) -->
+        <main class="app-body">
+          <!-- Monaco Editor Pane -->
+          <div class="workspace-pane editor-pane" id="editor-pane">
+            <div class="editor-pane-toolbar">
+              <div class="editor-tab-active">
+                <span class="tab-badge-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                </span>
+                <span id="editor-file-title">query.sql</span>
+                <span class="tab-save-indicator" id="save-indicator" title="Auto-saved to storage">●</span>
+              </div>
+
+              <div class="editor-controls-cluster">
+                <!-- SQL Reference / Cheat Sheet Icon Button -->
+                <button id="btn-open-cheatsheet" class="btn-editor-action" data-tooltip="SQL Cheat Sheet" data-tooltip-pos="bottom" aria-label="SQL Cheat Sheet">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                  </svg>
+                </button>
+
+                <!-- Format SQL (wand-sparkles icon only) -->
+                <button id="btn-format-sql" class="btn-editor-action" data-tooltip="Format SQL (Shift+Alt+F)" data-tooltip-pos="bottom-left" aria-label="Format SQL">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"></path>
+                    <path d="m14 7 3 3"></path>
+                    <path d="M5 6v4"></path>
+                    <path d="M19 14v4"></path>
+                    <path d="M10 2v2"></path>
+                    <path d="M7 8H3"></path>
+                    <path d="M21 16h-4"></path>
+                    <path d="M11 3H9"></path>
+                  </svg>
+                </button>
+
+                <!-- Editor Preferences Settings Gear -->
+                <button id="btn-editor-settings" class="btn-editor-action" data-tooltip="Preferences" data-tooltip-pos="bottom-left" aria-label="Preferences">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div id="monaco-container" class="monaco-editor-host"></div>
+          </div>
+
+          <!-- Resizable Divider Gutter -->
+          <div class="split-gutter" id="split-gutter" title="Drag to resize">
+            <div class="gutter-handle"></div>
+          </div>
+
+          <!-- Results Pane -->
+          <div class="workspace-pane results-pane" id="results-pane">
+            <div class="results-pane-toolbar">
+              <div class="results-tab-active">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>Results</span>
+              </div>
+              <div class="results-toolbar-actions">
+                <button id="btn-clear-results" class="btn-editor-action" data-tooltip="Clear Results" data-tooltip-pos="bottom-left" aria-label="Clear Results">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div id="results-container" class="results-content-host"></div>
+          </div>
+        </main>
+
+        <!-- Bottom Status Bar -->
+        <footer class="app-footer">
+          <div class="footer-left">
+            <span id="footer-engine-status">
+              <span class="footer-indicator-dot"></span> PostgreSQL 16 WASM
+            </span>
+            <span id="footer-active-db">
+              Storage: IndexedDB (Persistent)
+            </span>
+          </div>
+          <div class="footer-right">
+            <span>Shortcuts: <kbd>⌘↵</kbd> Run • <kbd>⌥⇧F</kbd> Format</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
