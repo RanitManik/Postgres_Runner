@@ -382,8 +382,8 @@ export class PGliteEngine {
       friendlyExplanation = `PostgreSQL reached the end of your SQL statement unexpectedly. This usually happens when a query was cut short, or is missing a closing token.`;
       hint = `Check the end of your query to ensure all expressions, clauses, or parentheses are fully completed.`;
     } else if (msg.includes('syntax error')) {
-      friendlyExplanation = `PostgreSQL hit a syntax error while parsing your query.`;
-      hint = `Look out for: missing commas between columns, unmatched parentheses, unclosed quotes ('...'), or misplaced SQL keywords.`;
+      friendlyExplanation = `PostgreSQL encountered a syntax error at line ${line || 1}.`;
+      hint = `Look out for: missing semicolons (;) between statements, missing commas between columns, or unmatched parentheses.`;
     } else if (msg.includes('duplicate key value violates unique constraint')) {
       friendlyExplanation = `You tried to insert a row with an ID or value that already exists in a PRIMARY KEY or UNIQUE column.`;
       hint = `Use a different unique value, or use ON CONFLICT DO UPDATE / DO NOTHING.`;
