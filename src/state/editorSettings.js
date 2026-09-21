@@ -7,7 +7,8 @@ export const DEFAULT_SETTINGS = {
   wordWrap: 'on',
   minimap: false,
   lineNumbers: 'on',
-  theme: 'postgres-dark'
+  theme: 'postgres-dark',
+  autocomplete: true
 };
 
 class EditorSettingsManager {

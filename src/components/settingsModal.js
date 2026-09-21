@@ -64,6 +64,18 @@ export class SettingsModal {
             </label>
           </div>
 
+          <!-- Autocomplete / Suggestions -->
+          <div class="preference-item">
+            <div class="pref-label-group">
+              <span class="pref-title">SQL Suggestions</span>
+              <span class="pref-caption">Popup keyword and schema autocompletions</span>
+            </div>
+            <label class="toggle-switch-ui">
+              <input type="checkbox" id="setting-autocomplete" ${current.autocomplete !== false ? 'checked' : ''} />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
           <!-- Minimap -->
           <div class="preference-item">
             <div class="pref-label-group">
@@ -135,6 +147,10 @@ export class SettingsModal {
 
     this.modal.querySelector('#setting-word-wrap').addEventListener('change', (e) => {
       editorSettings.set('wordWrap', e.target.checked ? 'on' : 'off');
+    });
+
+    this.modal.querySelector('#setting-autocomplete').addEventListener('change', (e) => {
+      editorSettings.set('autocomplete', e.target.checked);
     });
 
     this.modal.querySelector('#setting-minimap').addEventListener('change', (e) => {

@@ -315,6 +315,8 @@ export function initMonacoEditor(container, initialValue, { onRun, onChange } = 
 
   const resolveMonacoTheme = (t) => (t === 'modern-light' ? 'postgres-light' : (t || 'postgres-dark'));
 
+  const autocompleteEnabled = settings.autocomplete !== false;
+
   editorInstance = monaco.editor.create(container, {
     value: initialValue || '',
     language: 'sql',
@@ -331,8 +333,10 @@ export function initMonacoEditor(container, initialValue, { onRun, onChange } = 
     lineNumbers: settings.lineNumbers || 'on',
     renderLineHighlight: 'all',
     bracketPairColorization: { enabled: true },
-    suggestOnTriggerCharacters: true,
-    quickSuggestions: true,
+    suggestOnTriggerCharacters: autocompleteEnabled,
+    quickSuggestions: autocompleteEnabled ? { other: true, comments: false, strings: false } : false,
+    wordBasedSuggestions: autocompleteEnabled ? 'matchingDocuments' : 'off',
+    parameterHints: { enabled: autocompleteEnabled },
     padding: { top: 14, bottom: 14 }
   });
 
@@ -367,6 +371,14 @@ export function initMonacoEditor(container, initialValue, { onRun, onChange } = 
       editorInstance.updateOptions({ lineNumbers: value });
     } else if (key === 'fontFamily') {
       editorInstance.updateOptions({ fontFamily: value });
+    } else if (key === 'autocomplete') {
+      const enabled = Boolean(value);
+      editorInstance.updateOptions({
+        suggestOnTriggerCharacters: enabled,
+        quickSuggestions: enabled ? { other: true, comments: false, strings: false } : false,
+        wordBasedSuggestions: enabled ? 'matchingDocuments' : 'off',
+        parameterHints: { enabled }
+      });
     } else if (key === 'theme') {
       monaco.editor.setTheme(resolveMonacoTheme(value));
     }

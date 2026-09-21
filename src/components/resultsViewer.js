@@ -210,12 +210,92 @@ export class ResultsViewer {
       return;
     }
 
-    let html = `
+    // Filter results that have output tables (SELECT or RETURNING with fields)
+    const tableResults = results
+      .map((res, originalIndex) => ({ ...res, originalIndex }))
+      .filter(res => res.isSelect || (res.fields && res.fields.length > 0 && res.rows));
+
+    // Case 1: No output tables (e.g. CREATE TABLE, INSERT, UPDATE, DELETE, ALTER, DROP)
+    if (tableResults.length === 0) {
+      this.renderSuccessNoOutput(executionData);
+      return;
+    }
+
+    // Case 2: Exactly 1 output table (the 95% standard case)
+    if (tableResults.length === 1) {
+      this.renderSingleTableOutput(tableResults[0], executionData);
+      this.attachEventListeners(tableResults);
+      return;
+    }
+
+    // Case 3: Multiple output tables (e.g. multiple SELECT statements)
+    this.renderMultipleTablesOutput(tableResults, executionData);
+    this.attachEventListeners(tableResults);
+  }
+
+  renderSuccessNoOutput(executionData) {
+    const { results, totalDuration, statementCount } = executionData;
+    const totalAffected = results.reduce((acc, r) => acc + (r.affectedRows || 0), 0);
+
+    this.container.innerHTML = `
       <div class="results-wrapper">
         <div class="results-header-bar">
           <div class="results-meta-left">
             <span class="status-badge-ok">Success</span>
             <span class="meta-count"><strong>${statementCount}</strong> ${statementCount === 1 ? 'statement' : 'statements'}</span>
+            ${totalAffected > 0 ? `
+              <span class="meta-dot">•</span>
+              <span class="meta-affected"><strong>${totalAffected}</strong> ${totalAffected === 1 ? 'row' : 'rows'} affected</span>
+            ` : ''}
+            <span class="meta-dot">•</span>
+            <span class="meta-duration">${totalDuration}ms</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderSingleTableOutput(tableRes, executionData) {
+    const { totalDuration, statementCount } = executionData;
+    const rows = tableRes.rows || [];
+
+    this.container.innerHTML = `
+      <div class="results-wrapper">
+        <div class="results-header-bar">
+          <div class="results-meta-left">
+            <span class="status-badge-ok">Success</span>
+            <span class="meta-count"><strong>${rows.length}</strong> ${rows.length === 1 ? 'row' : 'rows'}</span>
+            ${statementCount > 1 ? `
+              <span class="meta-dot">•</span>
+              <span class="meta-subtle">${statementCount} statements</span>
+            ` : ''}
+            <span class="meta-dot">•</span>
+            <span class="meta-duration">${totalDuration}ms</span>
+          </div>
+
+          <div class="statement-metrics">
+            <input type="text" class="table-filter-input" data-idx="0" placeholder="Filter rows..." autocomplete="off" />
+            <button class="btn-export-tag btn-copy-csv" data-idx="0" title="Copy CSV to clipboard">CSV</button>
+            <button class="btn-export-tag btn-copy-json" data-idx="0" title="Copy JSON to clipboard">JSON</button>
+          </div>
+        </div>
+
+        <div class="statement-table-container single-table-mode" id="table-container-0">
+          ${this.renderDataTable(tableRes, 0)}
+        </div>
+      </div>
+    `;
+  }
+
+  renderMultipleTablesOutput(tableResults, executionData) {
+    const { totalDuration } = executionData;
+
+    let html = `
+      <div class="results-wrapper">
+        <div class="results-header-bar">
+          <div class="results-meta-left">
+            <span class="status-badge-ok">Success</span>
+            <span class="meta-count"><strong>${tableResults.length}</strong> result tables</span>
             <span class="meta-dot">•</span>
             <span class="meta-duration">${totalDuration}ms</span>
           </div>
@@ -224,8 +304,29 @@ export class ResultsViewer {
         <div class="statements-stream">
     `;
 
-    results.forEach((res, idx) => {
-      html += this.renderStatementCard(res, idx);
+    tableResults.forEach((res, idx) => {
+      const rows = res.rows || [];
+      html += `
+        <div class="statement-card" data-index="${idx}">
+          <div class="statement-card-header">
+            <div class="statement-title-group">
+              <span class="statement-type-pill pill-select">Result #${idx + 1}</span>
+              <code class="statement-sql-snippet" title="${escapeHtml(res.sql)}">${escapeHtml(this.truncateSnippet(res.sql))}</code>
+            </div>
+
+            <div class="statement-metrics">
+              <span class="metric-rows-tag">${rows.length} ${rows.length === 1 ? 'row' : 'rows'}</span>
+              <input type="text" class="table-filter-input" data-idx="${idx}" placeholder="Filter results..." autocomplete="off" />
+              <button class="btn-export-tag btn-copy-csv" data-idx="${idx}" title="Copy CSV to clipboard">CSV</button>
+              <button class="btn-export-tag btn-copy-json" data-idx="${idx}" title="Copy JSON to clipboard">JSON</button>
+            </div>
+          </div>
+
+          <div class="statement-table-container" id="table-container-${idx}">
+            ${this.renderDataTable(res, idx)}
+          </div>
+        </div>
+      `;
     });
 
     html += `
@@ -234,43 +335,6 @@ export class ResultsViewer {
     `;
 
     this.container.innerHTML = html;
-    this.attachEventListeners(results);
-  }
-
-  renderStatementCard(res, idx) {
-    const isSelect = res.isSelect;
-    const type = res.type || 'QUERY';
-    const rows = res.rows || [];
-
-    return `
-      <div class="statement-card" data-index="${idx}">
-        <div class="statement-card-header">
-          <div class="statement-title-group">
-            <span class="statement-type-pill ${this.getPillClass(type)}">${escapeHtml(type)}</span>
-            <code class="statement-sql-snippet" title="${escapeHtml(res.sql)}">${escapeHtml(this.truncateSnippet(res.sql))}</code>
-          </div>
-
-          <div class="statement-metrics">
-            ${isSelect ? `
-              <span class="metric-rows-tag">${rows.length} ${rows.length === 1 ? 'row' : 'rows'}</span>
-              <input type="text" class="table-filter-input" data-idx="${idx}" placeholder="Filter results..." autocomplete="off" />
-              <button class="btn-export-tag btn-copy-csv" data-idx="${idx}" title="Copy CSV to clipboard">CSV</button>
-              <button class="btn-export-tag btn-copy-json" data-idx="${idx}" title="Copy JSON to clipboard">JSON</button>
-            ` : `
-              <span class="metric-rows-tag tag-affected">
-                ${res.affectedRows > 0 ? `${res.affectedRows} affected` : 'OK'}
-              </span>
-            `}
-          </div>
-        </div>
-
-        ${isSelect ? `
-          <div class="statement-table-container" id="table-container-${idx}">
-            ${this.renderDataTable(res, idx)}
-          </div>
-        ` : ''}
-      </div>
-    `;
   }
 
   renderDataTable(res, idx) {

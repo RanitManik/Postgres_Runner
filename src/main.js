@@ -398,6 +398,7 @@ async function initApp() {
   // 11. Split Gutter Resizing (Editor/Results & Left Sidebar)
   setupSplitGutter();
   setupSidebarResizing();
+  setupSidebarToggle();
 
   // Resize listener
   window.addEventListener('resize', () => {
@@ -548,6 +549,63 @@ function setupSidebarResizing() {
 
       const inst = getMonacoInstance();
       if (inst) inst.layout();
+    }
+  });
+}
+
+/**
+ * Setup layout toggle buttons and keyboard shortcut (Cmd+B / Ctrl+B) to collapse/expand Explorer sidebar
+ */
+function setupSidebarToggle() {
+  const appLayout = document.getElementById('app');
+  const toggleBtn = document.getElementById('btn-toggle-sidebar');
+  const STORAGE_KEY_SIDEBAR_COLLAPSED = 'pg_runner_sidebar_collapsed';
+
+  const updateToggleBtnUI = (collapsed) => {
+    if (!toggleBtn) return;
+    toggleBtn.classList.toggle('is-collapsed', collapsed);
+    const iconClose = toggleBtn.querySelector('.icon-sidebar-close');
+    const iconOpen = toggleBtn.querySelector('.icon-sidebar-open');
+    if (iconClose && iconOpen) {
+      iconClose.style.display = collapsed ? 'none' : 'block';
+      iconOpen.style.display = collapsed ? 'block' : 'none';
+    }
+    toggleBtn.setAttribute(
+      'data-tooltip',
+      collapsed ? 'Expand Sidebar (Cmd+B)' : 'Collapse Sidebar (Cmd+B)'
+    );
+  };
+
+  const isCollapsed = localStorage.getItem(STORAGE_KEY_SIDEBAR_COLLAPSED) === 'true';
+  if (isCollapsed && appLayout) {
+    appLayout.classList.add('sidebar-collapsed');
+    updateToggleBtnUI(true);
+  } else {
+    updateToggleBtnUI(false);
+  }
+
+  const toggleSidebar = () => {
+    if (!appLayout) return;
+    const willCollapse = !appLayout.classList.contains('sidebar-collapsed');
+    appLayout.classList.toggle('sidebar-collapsed', willCollapse);
+    localStorage.setItem(STORAGE_KEY_SIDEBAR_COLLAPSED, willCollapse ? 'true' : 'false');
+
+    updateToggleBtnUI(willCollapse);
+
+    // Trigger Monaco layout after DOM reflow
+    const inst = getMonacoInstance();
+    if (inst) {
+      setTimeout(() => inst.layout(), 40);
+    }
+  };
+
+  if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+
+  // Global shortcut Cmd+B / Ctrl+B to toggle explorer sidebar
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b' && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      toggleSidebar();
     }
   });
 }

@@ -196,6 +196,20 @@
         <!-- Top Navigation Header (Height 44px, aligned with sidebar header) -->
         <header class="app-header">
           <div class="header-left">
+            <!-- Explorer Sidebar Toggle Layout Button -->
+            <button id="btn-toggle-sidebar" class="btn-theme-switch" data-tooltip="Collapse Sidebar (Cmd+B)" data-tooltip-pos="bottom-right" aria-label="Toggle Explorer Sidebar">
+              <svg class="icon-sidebar-close" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                <path d="M9 3v18"></path>
+                <path d="m16 15-3-3 3-3"></path>
+              </svg>
+              <svg class="icon-sidebar-open" style="display:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                <path d="M9 3v18"></path>
+                <path d="m14 9 3 3-3 3"></path>
+              </svg>
+            </button>
+
             <!-- Unified Project Dropdown Switcher -->
             <div class="project-dropdown-wrapper" id="project-dropdown-wrapper">
               <button class="project-trigger-btn" id="btn-project-trigger" title="Switch or manage playgrounds" aria-haspopup="true" aria-expanded="false">
