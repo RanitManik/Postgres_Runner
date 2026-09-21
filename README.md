@@ -1,41 +1,96 @@
-# PostgreSQL Runner (Instant In-Browser SQL Playground)
+<div align="center">
 
-<p align="center">
-  <a href="https://postgres-runner.vercel.app">
-    <img src="https://img.shields.io/badge/Live%20Demo-postgres--runner.vercel.app-0284c7?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
-  </a>
-  <img src="https://img.shields.io/badge/PostgreSQL%2016-PGlite%20WASM-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16 WASM" />
-  <img src="https://img.shields.io/badge/Editor-Monaco%20Editor-007acc?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="Monaco Editor" />
-  <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License MIT" />
-  <img src="https://img.shields.io/badge/Status-Vibe--Coded%20%2F%20Experimental-orange?style=for-the-badge" alt="Status" />
-</p>
+<a href="https://postgres-runner.vercel.app">
+  <img src="./public/postgres-logo.svg" width="80" height="80" alt="PostgreSQL Runner Logo" />
+</a>
 
-> **Live Application**: [https://postgres-runner.vercel.app](https://postgres-runner.vercel.app)
+# Postgres Runner
 
-A lightweight, zero-setup, in-browser PostgreSQL 16 playground and SQL workbench powered by **WebAssembly (PGlite)**, **Monaco Editor**, and **IndexedDB**. Execute real PostgreSQL queries, inspect relational schemas, organize code with multi-file tabs, and persist databases locally on your device without setting up Docker, cloud servers, or local services.
+**Instant, zero-setup PostgreSQL 16 playground running client-side in your browser via WebAssembly.**
+
+[![Live Demo](https://img.shields.io/badge/Demo-postgres--runner.vercel.app-0284c7?style=flat-square&logo=vercel)](https://postgres-runner.vercel.app)
+[![Engine](https://img.shields.io/badge/PostgreSQL%2016-PGlite%20WASM-336791?style=flat-square&logo=postgresql)](https://github.com/electric-sql/pglite)
+[![Editor](https://img.shields.io/badge/Editor-Monaco-007acc?style=flat-square&logo=visualstudiocode)](https://microsoft.github.io/monaco-editor/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+
+<br />
+
+[**🚀 Open Live Playground**](https://postgres-runner.vercel.app) • [**✨ Features**](#-key-features) • [**⌨️ Shortcuts**](#️-keyboard-shortcuts) • [**🛠️ Local Setup**](#-getting-started-locally)
+
+<br />
+
+<img src="./public/postgres-preview.png" alt="Postgres Runner Interface Preview" width="100%" style="border-radius: 10px;" />
+
+</div>
+
+<br />
 
 ---
 
-> [!WARNING]
-> ### ⚠️ Project Notice: Vibe-Coded & Not Actively Maintained
-> This project was completely **vibe-coded** by [@RanitManik](https://github.com/RanitManik) purely so I could practice, test, and experiment with PostgreSQL without any local installation hassle or managing cloud instances.
-> 
-> **It is not actively maintained**, is provided "as is", and is not meant for enterprise or production deployments. Feel free to fork it, inspect the code, tweak it, or use it for your own SQL learning and playground experiments!
+> [!NOTE]
+> ### 🧪 Notice: Vibe-Coded & Not Actively Maintained
+> This project was completely **vibe-coded** by [@RanitManik](https://github.com/RanitManik) for personal use—specifically to practice, experiment with, and learn PostgreSQL syntax, relational models, and queries rapidly **without the hassle of local installations, Docker containers, or cloud database management**.
+>
+> **It is not actively maintained** and is provided strictly "as-is". If you find it helpful, feel free to use it, fork it, tweak it, or adapt it for your own SQL learning adventures!
+
+---
+
+## 📖 Overview
+
+**Postgres Runner** is a private, lightweight SQL workbench and sandbox that embeds a real **PostgreSQL 16** database directly into your web browser. 
+
+Powered by [PGlite](https://github.com/electric-sql/pglite) (Postgres compiled to WebAssembly), [Monaco Editor](https://microsoft.github.io/monaco-editor/), and IndexedDB persistence, you can write DDL statements, seed sample data across multiple SQL files, run complex joins, and inspect results with sub-10ms execution latency—all without sending a single byte over the network.
 
 ---
 
 ## ✨ Key Features
 
-- **🐘 Authentic PostgreSQL 16 in WASM**: Powered by `@electric-sql/pglite`, running real PostgreSQL client-side in WebAssembly.
-- **📁 Multi-File SQL Tabs**: Work on multiple `.sql` files (`schema.sql`, `seed.sql`, `queries.sql`) simultaneously inside the same playground with independent undo/redo history, inline renaming, and zero-layout-shift auto-saving.
-- **💾 Persistent Local Storage**: Databases and editor files persist across page reloads using browser IndexedDB and `localStorage`.
-- **🗂️ Multi-Playground Manager**: Create, clone, switch, search, and batch-delete separate isolated database sandboxes.
-- **⚡ Interactive Schema Explorer**: Live tree introspection of public tables, columns, primary keys, and data types with one-click SQL snippet generators.
-- **💻 Monaco Code Editor**: Full-featured VS Code-style editor with SQL syntax highlighting, keyword autocompletion, schema-aware suggestions, and error line markers.
-- **📊 Rich Results Canvas**: View tabular query results, execution times, affected row counters, and one-click copy to **CSV** or **JSON**.
-- **🪄 SQL Formatter & Dump Export**: Auto-format SQL with `sql-formatter` and download complete SQL database dumps anytime.
-- **🌓 Dark & Light Modes**: Seamless dark blue-slate developer workstation theme and a crisp Linear-inspired light theme.
-- **🔒 100% Private & Offline-First**: No data or queries ever leave your machine. Runs completely client-side.
+- **🐘 Real PostgreSQL 16 in WASM**  
+  Execute authentic PostgreSQL syntax—CTEs, Window Functions, Generated Columns, Foreign Keys, Triggers, and JSONB operators.
+- **📁 Multi-File SQL Tabs**  
+  Work on multiple SQL scripts (`schema.sql`, `seed.sql`, `queries.sql`) in the same playground session with independent undo/redo history, inline renaming, and zero-layout-shift auto-saving.
+- **💾 Persistent Browser Storage**  
+  Databases, tables, indexes, and editor tabs automatically persist across page reloads using browser IndexedDB and `localStorage`.
+- **🗂️ Isolated Playgrounds Manager**  
+  Create, clone, search, switch, and delete separate sandboxes for different projects or learning exercises.
+- **⚡ Live Schema Explorer**  
+  Real-time introspection tree showing public tables, columns, primary keys, and data types with one-click snippet generation.
+- **💻 Monaco Code Editor**  
+  VS Code-grade editing experience with SQL syntax highlighting, keyword autocompletion, schema-aware suggestions, and error markers.
+- **📊 Rich Results Canvas**  
+  Tabular query results with execution timing, affected row counters, and one-click export to **CSV** or **JSON**.
+- **🪄 SQL Formatter & Dump Export**  
+  Format unformatted queries via `sql-formatter` (<kbd>⌥⇧F</kbd> / <kbd>Alt+Shift+F</kbd>) and download complete SQL database dumps anytime.
+- **🌓 Dark & Light Modes**  
+  High-contrast developer workstation dark theme and a clean Linear-inspired light theme.
+- **🔒 100% Offline & Private**  
+  Zero tracking, zero analytics, zero external API calls. Everything executes locally on your CPU inside the browser.
+
+---
+
+## 🏗️ Architecture & How It Works
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                       Browser Tab                       │
+│                                                         │
+│  ┌───────────────────────┐    ┌──────────────────────┐  │
+│  │     Monaco Editor     │───▶│   PGlite WASM Engine │  │
+│  │   (Multi-File Tabs)   │    │  (PostgreSQL v16.2)  │  │
+│  └───────────────────────┘    └──────────┬───────────┘  │
+│              ▲                           │              │
+│              │ SQL Dump / DDL            ▼              │
+│  ┌───────────┴───────────┐    ┌──────────────────────┐  │
+│  │   Schema Explorer &   │◀───│  IndexedDB Storage   │  │
+│  │     Results Grid      │    │ (Persistent Database)│  │
+│  └───────────────────────┘    └──────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. **SQL Editor**: Code is written in Monaco models with persistent multi-tab support.
+2. **Execution Engine**: Queries are dispatched to `@electric-sql/pglite` running in WebAssembly.
+3. **Local Storage**: PGlite writes database pages to IndexedDB, persisting data without a server.
+4. **Schema & UI**: Live catalog queries refresh the schema explorer and format results into interactive tables.
 
 ---
 
@@ -44,20 +99,21 @@ A lightweight, zero-setup, in-browser PostgreSQL 16 playground and SQL workbench
 | Action | macOS | Windows / Linux |
 | :--- | :--- | :--- |
 | **Run Query (or Selection)** | <kbd>⌘</kbd> + <kbd>↵ Enter</kbd> | <kbd>Ctrl</kbd> + <kbd>↵ Enter</kbd> |
-| **Format SQL** | <kbd>⌥</kbd> + <kbd>⇧</kbd> + <kbd>F</kbd> | <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> |
-| **Scroll File Tabs** | <kbd>Mouse Wheel Up / Down</kbd> or <kbd>←</kbd> / <kbd>→</kbd> | <kbd>Mouse Wheel Up / Down</kbd> or <kbd>←</kbd> / <kbd>→</kbd> |
-| **Rename Tab** | <kbd>Double-click tab name</kbd> | <kbd>Double-click tab name</kbd> |
+| **Format SQL Code** | <kbd>⌥</kbd> + <kbd>⇧</kbd> + <kbd>F</kbd> | <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> |
+| **Scroll Tabs Bar** | <kbd>Mouse Wheel Up / Down</kbd> | <kbd>Mouse Wheel Up / Down</kbd> |
+| **Rename Active File** | <kbd>Double-click tab name</kbd> | <kbd>Double-click tab name</kbd> |
+| **Close File Tab** | Click <kbd>×</kbd> (with confirmation) | Click <kbd>×</kbd> (with confirmation) |
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Database Engine**: [PGlite](https://github.com/electric-sql/pglite) (PostgreSQL 16 compiled to WebAssembly)
+- **Engine**: [@electric-sql/pglite](https://github.com/electric-sql/pglite) (PostgreSQL 16 compiled to WebAssembly)
 - **Editor**: [Monaco Editor](https://microsoft.github.io/monaco-editor/)
 - **Formatting**: [sql-formatter](https://github.com/sql-formatter-org/sql-formatter)
-- **Bundler & Tooling**: [Vite](https://vitejs.dev/)
+- **Tooling & Bundler**: [Vite](https://vitejs.dev/)
 - **Icons**: [Lucide](https://lucide.dev/)
-- **Styling**: Vanilla CSS (High-contrast Design System)
+- **Styling**: Vanilla CSS (CSS Variables, Responsive Design System)
 
 ---
 
@@ -70,25 +126,27 @@ A lightweight, zero-setup, in-browser PostgreSQL 16 playground and SQL workbench
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/RanitManik/Postgres_Runner.git
    cd Postgres_Runner
    ```
 
-2. Install dependencies:
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. Start the local development server:
+3. **Start the local development server:**
    ```bash
    npm run dev
    ```
 
-4. Open `http://localhost:5173` in your browser.
+4. Open your browser and navigate to `http://localhost:5173`.
 
-### Building for Production
+### Production Build
+
+To generate an optimized production bundle:
 
 ```bash
 npm run build
@@ -99,4 +157,10 @@ npm run preview
 
 ## 📄 License
 
-MIT License — feel free to use and adapt for your own experiments.
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+  Crafted with ❤️ by <a href="https://github.com/RanitManik">Ranit Manik</a>
+</div>

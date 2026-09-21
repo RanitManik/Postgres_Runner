@@ -1107,8 +1107,14 @@ html, body {
   border-radius: var(--radius-sm);
   cursor: pointer;
   outline: none;
+  text-decoration: none;
   transition: all var(--duration-fast) var(--ease-spring);
   user-select: none;
+}
+
+.btn-outline-header svg,
+.btn-ghost-header svg {
+  flex-shrink: 0;
 }
 
 .btn-outline-header:hover,
@@ -1117,6 +1123,7 @@ html, body {
   border-color: var(--border-muted);
   color: var(--text-primary);
   transform: none !important;
+  text-decoration: none;
 }
 
 .btn-outline-header:active,
@@ -1124,6 +1131,16 @@ html, body {
   background: var(--bg-active);
   transform: none !important;
   opacity: 0.9;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  #btn-github-link span {
+    display: none;
+  }
+  #btn-github-link {
+    padding: 0 8px;
+  }
 }
 
 .btn-outline-header.warning:hover,
@@ -3351,6 +3368,24 @@ html, body {
   display: flex;
   align-items: center;
   gap: 14px;
+}
+
+.footer-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: color var(--duration-fast) var(--ease-spring);
+}
+
+.footer-link:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.footer-divider {
+  color: var(--border-muted);
+  opacity: 0.6;
 }
 
 .footer-indicator-dot {
