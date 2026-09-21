@@ -78,8 +78,13 @@ async function initApp() {
   resultsViewer = new ResultsViewer(
     resultsHost,
     (sql) => {
-      setEditorValue(sql);
-      executeCode(sql);
+      if (sql) {
+        setEditorValue(sql);
+        executeCode(sql);
+      } else {
+        const selection = getSelectedText();
+        executeCode(selection || getEditorValue());
+      }
     },
     (line) => {
       jumpToEditorLine(line);
@@ -195,8 +200,28 @@ async function initApp() {
     btnManage: btnDropdownManageProj
   });
 
-  // 8. Initialize Database Engine with IndexedDB
+  // 8. Initialize Database Engine with IndexedDB & Manage Initial Loader
+  const initialLoader = document.getElementById('initial-loader');
+  const loaderStatusText = document.getElementById('loader-status-text');
+
+  const dismissLoader = () => {
+    if (initialLoader && !initialLoader.classList.contains('is-hidden')) {
+      initialLoader.classList.add('is-hidden');
+      setTimeout(() => {
+        if (initialLoader.parentNode) {
+          initialLoader.remove();
+        }
+      }, 400);
+    }
+  };
+
+  // Safety timer so user is never permanently blocked
+  const loaderSafetyTimer = setTimeout(dismissLoader, 7000);
+
   try {
+    if (loaderStatusText) {
+      loaderStatusText.textContent = 'Booting PostgreSQL 16 WebAssembly...';
+    }
     if (footerStatus) {
       footerStatus.innerHTML = `<span class="spinner-sm"></span> Loading PostgreSQL 16 WASM...`;
     }
@@ -216,10 +241,20 @@ async function initApp() {
   }
 
   // 9. Initialize Schema Explorer
-  schemaExplorer = new SchemaExplorer(schemaHost, dbEngine, (schema) => {
-    updateSchemaCompletions(schema);
-  });
-  await schemaExplorer.refresh();
+  try {
+    if (loaderStatusText) {
+      loaderStatusText.textContent = 'Introspecting database schemas...';
+    }
+    schemaExplorer = new SchemaExplorer(schemaHost, dbEngine, (schema) => {
+      updateSchemaCompletions(schema);
+    });
+    await schemaExplorer.refresh();
+  } catch (schemaErr) {
+    console.warn('Initial schema inspection error:', schemaErr);
+  } finally {
+    clearTimeout(loaderSafetyTimer);
+    dismissLoader();
+  }
 
   // 10. Wire Header Action Buttons
   if (btnRun) {

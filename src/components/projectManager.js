@@ -318,8 +318,9 @@ export class ProjectManager {
                   <div class="manage-batch-toolbar">
                     <div class="batch-count-badge">
                       <span class="batch-count-num">${selectedIds.size}</span>
-                      <span>selected</span>
+                      <span class="batch-count-label">selected</span>
                     </div>
+                    <div class="batch-divider"></div>
                     <button class="btn-batch-action btn-batch-delete" id="btn-batch-delete" title="Delete selected playgrounds">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -472,9 +473,9 @@ export class ProjectManager {
             </div>
             <button class="btn btn-secondary" id="btn-manage-done">Close</button>
             <button class="btn btn-primary" id="btn-new-from-manage">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="8" y1="3" x2="8" y2="13"></line>
+                <line x1="3" y1="8" x2="13" y2="8"></line>
               </svg>
               <span>New Playground</span>
             </button>

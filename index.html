@@ -2,31 +2,170 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PostgreSQL Runner</title>
-    <meta name="description" content="Authentic PostgreSQL 16 WebAssembly playground with persistent IndexedDB storage, Monaco editor, and live schema explorer." />
-    
+    <title>PostgreSQL Runner — Instant In-Browser PostgreSQL 16 Playground &amp; SQL Sandbox (WASM)</title>
+    <meta name="description" content="Run full PostgreSQL 16 directly in your browser with zero installation. 100% private, client-side WebAssembly engine, persistent IndexedDB storage, Monaco SQL editor, instant visual results, and live schema explorer. Free and offline-first." />
+    <meta name="keywords" content="postgresql playground, postgres runner, online sql runner, postgresql sandbox, in-browser postgresql, wasm postgresql, pglite playground, learn sql online, sql fiddle alternative, instant postgresql, offline sql database, postgres 16 playground, webassembly database, browser sql sandbox" />
+    <meta name="author" content="Postgres Runner" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large" />
+    <link rel="canonical" href="https://postgresrunner.com/" />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://postgresrunner.com/" />
+    <meta property="og:site_name" content="Postgres Runner" />
+    <meta property="og:title" content="PostgreSQL Runner — Instant In-Browser PostgreSQL 16 Playground &amp; SQL Sandbox" />
+    <meta property="og:description" content="Execute real PostgreSQL 16 directly inside your browser powered by WebAssembly. Zero setup, persistent IndexedDB storage, Monaco editor with autocompletion, instant visual tables, and live schema introspection." />
+    <meta property="og:image" content="https://postgresrunner.com/postgres-preview.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Postgres Runner — In-Browser PostgreSQL 16 Playground" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@postgresrunner" />
+    <meta name="twitter:creator" content="@postgresrunner" />
+    <meta name="twitter:title" content="PostgreSQL Runner — Instant In-Browser PostgreSQL 16 Playground" />
+    <meta name="twitter:description" content="Full PostgreSQL 16 running directly in your browser via WebAssembly. Zero installation, persistent storage, visual schema explorer, and instant SQL diagnostics." />
+    <meta name="twitter:image" content="https://postgresrunner.com/postgres-preview.png" />
+
+    <!-- Browser & Device Theme -->
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="application-name" content="Postgres Runner" />
+    <meta name="apple-mobile-web-app-title" content="Postgres Runner" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Authentic PostgreSQL Elephant Logo Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
     <!-- Modern Sans & Mono Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     
+    <!-- Immediate Theme Initialization to avoid loader color mismatch -->
+    <script>
+      try {
+        const saved = JSON.parse(localStorage.getItem('pg_runner_editor_settings') || '{}');
+        if (saved && saved.theme) {
+          document.documentElement.setAttribute('data-theme', saved.theme);
+        }
+      } catch (e) {}
+    </script>
+
     <link rel="stylesheet" href="/src/style.css" />
+
+    <!-- Enterprise Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://postgresrunner.com/#webapp",
+          "name": "Postgres Runner",
+          "url": "https://postgresrunner.com/",
+          "description": "Free, instant in-browser PostgreSQL 16 playground powered by WebAssembly. Execute SQL queries, explore relational schemas, and persist databases locally with IndexedDB.",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "All modern web browsers",
+          "browserRequirements": "Requires WebAssembly and IndexedDB support",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "featureList": [
+            "Native PostgreSQL 16 WebAssembly Engine (PGlite)",
+            "Monaco Code Editor with Intelligent SQL Autocompletion",
+            "Persistent Local Database Storage with IndexedDB",
+            "Interactive Schema Explorer and Live Table Introspection",
+            "Multi-Statement Batch Query Execution and Error Diagnostics",
+            "One-Click CSV and JSON Result Exporting",
+            "SQL Dump Export and Project Management",
+            "Modern Dark and Light Themes"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://postgresrunner.com/#website",
+          "name": "Postgres Runner",
+          "url": "https://postgresrunner.com/",
+          "description": "The fastest in-browser PostgreSQL 16 sandbox and SQL query playground."
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://postgresrunner.com/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Postgres Runner?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Postgres Runner is a zero-setup, in-browser PostgreSQL 16 playground powered by WebAssembly (WASM). It runs authentic PostgreSQL directly on your device without sending SQL or data to an external server."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is my data stored in the cloud or private?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Your queries and tables are 100% private and execute entirely within your browser using client-side WebAssembly and IndexedDB persistent storage. No database servers or tracking are involved."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it support PostgreSQL 16 features?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes! Postgres Runner supports PostgreSQL 16 syntax and features including CTEs (Common Table Expressions), Window Functions, JSONB operators, Generated Columns, ON CONFLICT upserts, and Foreign Keys."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
+    <!-- Semantic Content for Search Engine Crawlers & Screen Readers -->
+    <header class="sr-only">
+      <h1>Postgres Runner — Instant In-Browser PostgreSQL 16 Playground &amp; SQL Sandbox</h1>
+      <p>
+        Postgres Runner is an in-browser developer tool that runs a full PostgreSQL 16 database directly in your web browser using WebAssembly.
+        Practice SQL queries, test database schemas, execute multi-statement scripts, inspect tables and indexes with an interactive Schema Explorer,
+        and manage multiple persistent playgrounds saved locally in IndexedDB.
+      </p>
+    </header>
+
+    <!-- Initial PostgreSQL WASM Splash Loader -->
+    <div id="initial-loader" class="initial-loader-overlay">
+      <div class="loader-content">
+        <div class="loader-logo-wrapper">
+          <img src="/postgres-logo.svg" alt="PostgreSQL Logo" class="loader-postgres-logo" width="64" height="64" />
+        </div>
+        <div class="loader-text-group">
+          <div class="loader-title">Postgres Runner</div>
+          <div class="loader-subtitle" id="loader-status-text">Booting PostgreSQL 16 WebAssembly...</div>
+        </div>
+        <div class="loader-progress-track">
+          <div class="loader-progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="app" class="app-layout">
       <!-- Continuous Left Sidebar (Full 100vh height from top to bottom) -->
       <aside class="app-sidebar" id="app-sidebar">
         <!-- Sidebar Brand Header (Height 44px, aligned with top nav header) -->
         <div class="sidebar-header">
-          <div class="brand" title="PostgreSQL 16 WebAssembly">
+          <div class="brand">
             <div class="brand-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-              </svg>
+              <img src="/postgres-logo.svg" alt="PostgreSQL Logo" width="18" height="18" />
             </div>
             <div class="brand-text-col">
               <span class="brand-name">Postgres Runner</span>
@@ -38,7 +177,7 @@
         <!-- Explorer Section Header (Height 38px, aligned with editor & results toolbars!) -->
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">EXPLORER</span>
-          <button id="btn-refresh-schema" class="btn-icon-tiny" title="Refresh database schema">
+          <button id="btn-refresh-schema" class="btn-icon-tiny" data-tooltip="Refresh Schema" data-tooltip-pos="bottom-left" aria-label="Refresh database schema">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
             </svg>
@@ -86,6 +225,12 @@
                     <span>New Playground</span>
                   </button>
                   <button class="btn-dropdown-action" id="btn-dropdown-manage-proj">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
                     <span>Manage All</span>
                   </button>
                 </div>
@@ -106,8 +251,8 @@
 
           <!-- END (RIGHT): Reset DB, Export, Theme Toggle -->
           <div class="header-right">
-            <!-- Reset Database (Secondary/Outline variant) -->
-            <button id="btn-reset-db" class="btn-outline-header warning" data-tooltip="Reset Database" data-tooltip-pos="bottom">
+            <!-- Reset Database (Secondary/Outline variant, no redundant tooltip) -->
+            <button id="btn-reset-db" class="btn-outline-header warning">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                 <path d="M3 3v5h5"></path>
@@ -115,8 +260,8 @@
               <span>Reset DB</span>
             </button>
 
-            <!-- Export SQL Dump (Secondary/Outline variant) -->
-            <button id="btn-export-sql" class="btn-outline-header" data-tooltip="Export SQL Dump" data-tooltip-pos="bottom">
+            <!-- Export SQL Dump (Secondary/Outline variant, no redundant tooltip) -->
+            <button id="btn-export-sql" class="btn-outline-header">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>

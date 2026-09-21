@@ -16,37 +16,82 @@ export class ResultsViewer {
     const formatKey = isMac ? '⌥⇧F' : 'Alt+Shift+F';
 
     this.container.innerHTML = `
-      <div class="results-empty-hero">
-        <div class="empty-icon-container">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-          </svg>
+      <div class="results-empty-canvas">
+        <!-- Ghost Table Grid Backdrop -->
+        <div class="ghost-table-backdrop" aria-hidden="true">
+          <div class="ghost-table-header">
+            <div class="ghost-col ghost-col-num">#</div>
+            <div class="ghost-col ghost-col-sm">id</div>
+            <div class="ghost-col ghost-col-lg">title</div>
+            <div class="ghost-col ghost-col-md">status</div>
+            <div class="ghost-col ghost-col-lg">created_at</div>
+          </div>
+          <div class="ghost-table-row">
+            <div class="ghost-col ghost-col-num"><span class="ghost-bar w-12"></span></div>
+            <div class="ghost-col ghost-col-sm"><span class="ghost-bar w-24"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-64"></span></div>
+            <div class="ghost-col ghost-col-md"><span class="ghost-bar w-36"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-48"></span></div>
+          </div>
+          <div class="ghost-table-row">
+            <div class="ghost-col ghost-col-num"><span class="ghost-bar w-12"></span></div>
+            <div class="ghost-col ghost-col-sm"><span class="ghost-bar w-32"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-48"></span></div>
+            <div class="ghost-col ghost-col-md"><span class="ghost-bar w-28"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-56"></span></div>
+          </div>
+          <div class="ghost-table-row">
+            <div class="ghost-col ghost-col-num"><span class="ghost-bar w-12"></span></div>
+            <div class="ghost-col ghost-col-sm"><span class="ghost-bar w-20"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-56"></span></div>
+            <div class="ghost-col ghost-col-md"><span class="ghost-bar w-40"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-44"></span></div>
+          </div>
+          <div class="ghost-table-row">
+            <div class="ghost-col ghost-col-num"><span class="ghost-bar w-12"></span></div>
+            <div class="ghost-col ghost-col-sm"><span class="ghost-bar w-28"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-40"></span></div>
+            <div class="ghost-col ghost-col-md"><span class="ghost-bar w-32"></span></div>
+            <div class="ghost-col ghost-col-lg"><span class="ghost-bar w-52"></span></div>
+          </div>
         </div>
 
-        <div class="empty-text-group">
-          <h3 class="results-hero-title">Ready to run queries</h3>
-          <p class="results-hero-caption">
-            Write or paste SQL in the editor to query the in-browser database.
-          </p>
-        </div>
+        <!-- Foreground Centered Action Card -->
+        <div class="empty-center-card">
+          <div class="empty-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+            </svg>
+          </div>
 
-        <div class="empty-hints-bar">
-          <span class="empty-hint-item">
-            <kbd class="empty-kbd">${runKey}</kbd> Run
-          </span>
-          <span class="empty-hint-sep"></span>
-          <span class="empty-hint-item">
-            <kbd class="empty-kbd">${formatKey}</kbd> Format
-          </span>
-          <span class="empty-hint-sep"></span>
-          <span class="empty-hint-item">
-            <span class="empty-dot-active"></span> PG 16 WASM
-          </span>
+          <div class="empty-card-text">
+            <h3 class="empty-card-title">Ready to run queries</h3>
+            <p class="empty-card-desc">
+              Execute SQL from the editor to inspect live table results.
+            </p>
+          </div>
+
+          <div class="empty-card-actions">
+            <button id="btn-empty-run-query" class="btn-empty-run-primary" type="button" aria-label="Execute SQL Query">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Run Query</span>
+              <kbd class="empty-btn-kbd">${runKey}</kbd>
+            </button>
+          </div>
         </div>
       </div>
     `;
+
+    const runBtn = this.container.querySelector('#btn-empty-run-query');
+    if (runBtn && typeof this.onExecuteSnippet === 'function') {
+      runBtn.addEventListener('click', () => {
+        this.onExecuteSnippet();
+      });
+    }
   }
 
   renderLoading() {
