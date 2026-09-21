@@ -1831,29 +1831,8 @@ html, body {
   z-index: 5;
 }
 
-/* Make data columns shrink-wrap neatly to their content with sensible min/max bounds */
-.pg-data-table th.col-sortable,
-.pg-data-table td.cell-val {
-  width: 1%;
-  white-space: nowrap;
-  min-width: 80px;
-  max-width: 360px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Filler column cleanly absorbs any remaining width on the right */
-.pg-data-table th.col-filler,
-.pg-data-table td.cell-filler {
-  width: auto;
-  padding: 0;
+.pg-data-table thead th:last-child {
   border-right: none;
-  border-bottom: 1px solid var(--border-hairline);
-  background: transparent;
-}
-
-.pg-data-table thead th.col-filler {
-  background: var(--bg-elevated);
 }
 
 .pg-data-table th.col-sortable {
@@ -1906,6 +1885,10 @@ html, body {
   border-right: 1px solid var(--border-hairline);
   color: var(--text-primary);
   white-space: nowrap;
+}
+
+.pg-data-table tr td.cell-val:last-child {
+  border-right: none;
 }
 
 .pg-data-table td.cell-empty-state {

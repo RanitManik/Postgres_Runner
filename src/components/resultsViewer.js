@@ -390,7 +390,6 @@ export class ResultsViewer {
     }
 
     html += `
-            <th class="col-filler" aria-hidden="true"></th>
           </tr>
         </thead>
         <tbody>
@@ -400,7 +399,7 @@ export class ResultsViewer {
       const msg = queryFilter ? `No rows matching "${escapeHtml(queryFilter)}"` : '0 rows returned';
       html += `
         <tr>
-          <td colspan="${fields.length + 2}" class="cell-empty-state">${msg}</td>
+          <td colspan="${fields.length + 1}" class="cell-empty-state">${msg}</td>
         </tr>
       `;
     } else {
@@ -410,7 +409,7 @@ export class ResultsViewer {
           const val = row[field.name];
           html += `<td class="cell-val ${this.getCellTypeClass(val)}" title="${escapeHtml(this.formatCellValue(val))}">${escapeHtml(this.formatCellValue(val))}</td>`;
         }
-        html += `<td class="cell-filler" aria-hidden="true"></td></tr>`;
+        html += `</tr>`;
       });
     }
 
