@@ -88,6 +88,18 @@ export class SettingsModal {
             </label>
           </div>
 
+          <!-- Scroll Beyond Last Line -->
+          <div class="preference-item">
+            <div class="pref-label-group">
+              <span class="pref-title">Scroll Beyond Last Line</span>
+              <span class="pref-caption">Allow scrolling past the end of the file</span>
+            </div>
+            <label class="toggle-switch-ui">
+              <input type="checkbox" id="setting-scroll-beyond" ${current.scrollBeyondLastLine !== false ? 'checked' : ''} />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
           <!-- Tab Size -->
           <div class="preference-item">
             <div class="pref-label-group">
@@ -156,6 +168,13 @@ export class SettingsModal {
     this.modal.querySelector('#setting-minimap').addEventListener('change', (e) => {
       editorSettings.set('minimap', e.target.checked);
     });
+
+    const scrollBeyondInput = this.modal.querySelector('#setting-scroll-beyond');
+    if (scrollBeyondInput) {
+      scrollBeyondInput.addEventListener('change', (e) => {
+        editorSettings.set('scrollBeyondLastLine', e.target.checked);
+      });
+    }
 
     this.modal.querySelector('#setting-tab-size').addEventListener('change', (e) => {
       editorSettings.set('tabSize', parseInt(e.target.value, 10));

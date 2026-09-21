@@ -8,7 +8,8 @@ export const DEFAULT_SETTINGS = {
   minimap: false,
   lineNumbers: 'on',
   theme: 'postgres-dark',
-  autocomplete: true
+  autocomplete: true,
+  scrollBeyondLastLine: true
 };
 
 class EditorSettingsManager {

@@ -341,7 +341,7 @@ export class ResultsViewer {
     const fields = res.fields || [];
     let rows = res.rows || [];
 
-    if (rows.length === 0) {
+    if (fields.length === 0 && rows.length === 0) {
       return `<div style="padding: 18px 12px; text-align: center; color: var(--text-muted); font-size: 11px;">0 rows returned</div>`;
     }
 
@@ -390,19 +390,29 @@ export class ResultsViewer {
     }
 
     html += `
+            <th class="col-filler" aria-hidden="true"></th>
           </tr>
         </thead>
         <tbody>
     `;
 
-    rows.forEach((row, rowIdx) => {
-      html += `<tr><td class="col-index">${rowIdx + 1}</td>`;
-      for (const field of fields) {
-        const val = row[field.name];
-        html += `<td class="cell-val ${this.getCellTypeClass(val)}" title="${escapeHtml(this.formatCellValue(val))}">${escapeHtml(this.formatCellValue(val))}</td>`;
-      }
-      html += `</tr>`;
-    });
+    if (rows.length === 0) {
+      const msg = queryFilter ? `No rows matching "${escapeHtml(queryFilter)}"` : '0 rows returned';
+      html += `
+        <tr>
+          <td colspan="${fields.length + 2}" class="cell-empty-state">${msg}</td>
+        </tr>
+      `;
+    } else {
+      rows.forEach((row, rowIdx) => {
+        html += `<tr><td class="col-index">${rowIdx + 1}</td>`;
+        for (const field of fields) {
+          const val = row[field.name];
+          html += `<td class="cell-val ${this.getCellTypeClass(val)}" title="${escapeHtml(this.formatCellValue(val))}">${escapeHtml(this.formatCellValue(val))}</td>`;
+        }
+        html += `<td class="cell-filler" aria-hidden="true"></td></tr>`;
+      });
+    }
 
     html += `
         </tbody>

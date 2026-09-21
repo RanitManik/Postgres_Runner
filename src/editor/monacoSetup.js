@@ -329,7 +329,7 @@ export function initMonacoEditor(container, initialValue, { onRun, onChange } = 
     wordWrap: settings.wordWrap || 'on',
     automaticLayout: true,
     minimap: { enabled: Boolean(settings.minimap) },
-    scrollBeyondLastLine: false,
+    scrollBeyondLastLine: settings.scrollBeyondLastLine !== false,
     lineNumbers: settings.lineNumbers || 'on',
     renderLineHighlight: 'all',
     bracketPairColorization: { enabled: true },
@@ -371,6 +371,8 @@ export function initMonacoEditor(container, initialValue, { onRun, onChange } = 
       editorInstance.updateOptions({ lineNumbers: value });
     } else if (key === 'fontFamily') {
       editorInstance.updateOptions({ fontFamily: value });
+    } else if (key === 'scrollBeyondLastLine') {
+      editorInstance.updateOptions({ scrollBeyondLastLine: Boolean(value) });
     } else if (key === 'autocomplete') {
       const enabled = Boolean(value);
       editorInstance.updateOptions({
