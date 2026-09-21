@@ -199,11 +199,117 @@ function registerCompletions() {
   });
 }
 
+// Multi-model storage for files/tabs: fileId -> { model, viewState }
+const fileModels = new Map();
+let currentActiveFileId = null;
+let onContentChangeHandler = null;
+
+/**
+ * Get existing Monaco text model or create a new one for a file
+ */
+export function getOrCreateModel(fileId, content = '', fileName = 'query.sql') {
+  if (fileModels.has(fileId)) {
+    return fileModels.get(fileId);
+  }
+
+  const safeFileName = (fileName || 'query.sql').replace(/[^a-zA-Z0-9._-]/g, '_');
+  const uri = monaco.Uri.parse(`inmemory://workspace/${fileId}/${safeFileName}`);
+  
+  // Dispose old model if already registered with Monaco for this URI
+  const existingMonacoModel = monaco.editor.getModel(uri);
+  if (existingMonacoModel) {
+    existingMonacoModel.dispose();
+  }
+
+  const model = monaco.editor.createModel(content || '', 'sql', uri);
+  const entry = { model, viewState: null };
+  fileModels.set(fileId, entry);
+  return entry;
+}
+
+/**
+ * Switch editor to a specific file model, preserving cursor/scroll state
+ */
+export function switchToFileModel(fileId, content = '', fileName = 'query.sql') {
+  if (!editorInstance) return;
+
+  // 1. Save view state of current outgoing model
+  if (currentActiveFileId && fileModels.has(currentActiveFileId)) {
+    const currentEntry = fileModels.get(currentActiveFileId);
+    if (currentEntry) {
+      currentEntry.viewState = editorInstance.saveViewState();
+    }
+  }
+
+  // 2. Fetch or create target model
+  const targetEntry = getOrCreateModel(fileId, content, fileName);
+  
+  // 3. Switch editor model
+  editorInstance.setModel(targetEntry.model);
+  currentActiveFileId = fileId;
+
+  // 4. Restore target view state if available
+  if (targetEntry.viewState) {
+    editorInstance.restoreViewState(targetEntry.viewState);
+  }
+
+  clearEditorErrors();
+  editorInstance.focus();
+}
+
+/**
+ * Dispose a model when a file tab is closed
+ */
+export function disposeFileModel(fileId) {
+  if (fileModels.has(fileId)) {
+    const entry = fileModels.get(fileId);
+    if (entry && entry.model) {
+      entry.model.dispose();
+    }
+    fileModels.delete(fileId);
+  }
+  if (currentActiveFileId === fileId) {
+    currentActiveFileId = null;
+  }
+}
+
+/**
+ * Re-initialize all file models when switching playgrounds
+ */
+export function resetAllFileModels(files = [], activeFileId = null) {
+  // Dispose all existing models
+  for (const [, entry] of fileModels) {
+    if (entry && entry.model) {
+      entry.model.dispose();
+    }
+  }
+  fileModels.clear();
+  currentActiveFileId = null;
+
+  if (!editorInstance) return;
+
+  // Create models for each file
+  for (const f of files) {
+    getOrCreateModel(f.id, f.content, f.name);
+  }
+
+  const targetId = activeFileId || files[0]?.id;
+  if (targetId) {
+    const targetFile = files.find(f => f.id === targetId) || files[0];
+    switchToFileModel(targetFile.id, targetFile.content, targetFile.name);
+  }
+}
+
+export function getActiveFileId() {
+  return currentActiveFileId;
+}
+
 /**
  * Initialize Monaco Editor with settings from editorSettings store
  */
 export function initMonacoEditor(container, initialValue, { onRun, onChange } = {}) {
   registerCompletions();
+  onContentChangeHandler = onChange;
 
   const settings = editorSettings.getAll();
 
@@ -238,11 +344,11 @@ export function initMonacoEditor(container, initialValue, { onRun, onChange } = 
     }
   });
 
-  // Track changes
+  // Track changes in active model
   editorInstance.onDidChangeModelContent(() => {
     clearEditorErrors();
-    if (onChange) {
-      onChange(getEditorValue());
+    if (onContentChangeHandler) {
+      onContentChangeHandler(getEditorValue(), currentActiveFileId);
     }
   });
 

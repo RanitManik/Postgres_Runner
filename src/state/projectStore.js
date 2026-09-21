@@ -214,6 +214,27 @@ SELECT * FROM my_table;
   }
 ];
 
+function normalizeProject(project) {
+  if (!project) return null;
+  if (!project.files || !Array.isArray(project.files) || project.files.length === 0) {
+    const defaultFile = {
+      id: 'file_' + Date.now().toString(36) + '_main',
+      name: 'query.sql',
+      content: project.sql || '',
+      createdAt: project.createdAt || Date.now(),
+      updatedAt: project.updatedAt || Date.now()
+    };
+    project.files = [defaultFile];
+    project.activeFileId = defaultFile.id;
+  }
+  if (!project.activeFileId || !project.files.some(f => f.id === project.activeFileId)) {
+    project.activeFileId = project.files[0].id;
+  }
+  const activeFile = project.files.find(f => f.id === project.activeFileId);
+  project.sql = activeFile ? activeFile.content : '';
+  return project;
+}
+
 class ProjectStore {
   constructor() {
     this.projects = this.loadProjects();
@@ -226,15 +247,16 @@ class ProjectStore {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map(p => normalizeProject(p));
         }
       }
     } catch (e) {
       console.warn('Failed to parse projects from localStorage:', e);
     }
     // Default fallback
-    this.saveProjects(STARTER_PROJECTS);
-    return [...STARTER_PROJECTS];
+    const defaults = STARTER_PROJECTS.map(p => normalizeProject({ ...p }));
+    this.saveProjects(defaults);
+    return defaults;
   }
 
   saveProjects(projects) {
@@ -261,30 +283,169 @@ class ProjectStore {
   }
 
   getActiveProject() {
-    return this.projects.find(p => p.id === this.activeProjectId) || this.projects[0];
+    const p = this.projects.find(p => p.id === this.activeProjectId) || this.projects[0];
+    return p ? normalizeProject(p) : null;
   }
 
   getAllProjects() {
-    return [...this.projects];
+    return this.projects.map(p => normalizeProject(p));
+  }
+
+  getProjectFiles(projectId) {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return [];
+    normalizeProject(project);
+    return project.files;
+  }
+
+  getActiveFile(projectId) {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return null;
+    normalizeProject(project);
+    return project.files.find(f => f.id === project.activeFileId) || project.files[0];
+  }
+
+  setActiveFile(projectId, fileId) {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return null;
+    normalizeProject(project);
+    const target = project.files.find(f => f.id === fileId);
+    if (target) {
+      project.activeFileId = target.id;
+      project.sql = target.content;
+      this.saveProjects(this.projects);
+      return target;
+    }
+    return null;
+  }
+
+  createFile(projectId, name = '', initialContent = '') {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return null;
+    normalizeProject(project);
+
+    let finalName = (name || '').trim();
+    if (!finalName) {
+      let counter = project.files.length + 1;
+      finalName = `query_${counter}.sql`;
+      while (project.files.some(f => f.name.toLowerCase() === finalName.toLowerCase())) {
+        counter++;
+        finalName = `query_${counter}.sql`;
+      }
+    } else if (!finalName.toLowerCase().endsWith('.sql')) {
+      finalName += '.sql';
+    }
+
+    const id = 'file_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+    const newFile = {
+      id,
+      name: finalName,
+      content: initialContent || `-- ${finalName}\n\n`,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    project.files.push(newFile);
+    project.activeFileId = newFile.id;
+    project.sql = newFile.content;
+    project.updatedAt = Date.now();
+    this.saveProjects(this.projects);
+    return newFile;
+  }
+
+  renameFile(projectId, fileId, newName) {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return null;
+    normalizeProject(project);
+    const file = project.files.find(f => f.id === fileId);
+    if (!file) return null;
+
+    let cleaned = (newName || '').trim();
+    if (!cleaned) return file;
+    if (!cleaned.toLowerCase().endsWith('.sql')) {
+      cleaned += '.sql';
+    }
+
+    const isDuplicate = project.files.some(f => f.id !== fileId && f.name.toLowerCase() === cleaned.toLowerCase());
+    if (isDuplicate) {
+      throw new Error(`A file named "${cleaned}" already exists.`);
+    }
+
+    file.name = cleaned;
+    file.updatedAt = Date.now();
+    project.updatedAt = Date.now();
+    this.saveProjects(this.projects);
+    return file;
+  }
+
+  deleteFile(projectId, fileId) {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return null;
+    normalizeProject(project);
+
+    if (project.files.length <= 1) {
+      throw new Error('Cannot close the only remaining file.');
+    }
+
+    const fileIndex = project.files.findIndex(f => f.id === fileId);
+    if (fileIndex === -1) return null;
+
+    const deletedFile = project.files[fileIndex];
+    const wasActive = project.activeFileId === fileId;
+
+    project.files.splice(fileIndex, 1);
+
+    if (wasActive) {
+      const nextActive = project.files[Math.min(fileIndex, project.files.length - 1)];
+      project.activeFileId = nextActive.id;
+      project.sql = nextActive.content;
+    }
+
+    project.updatedAt = Date.now();
+    this.saveProjects(this.projects);
+
+    return {
+      deletedFile,
+      wasActive,
+      activeFileId: project.activeFileId
+    };
+  }
+
+  updateActiveFileContent(projectId, content) {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return;
+    normalizeProject(project);
+    const file = project.files.find(f => f.id === project.activeFileId);
+    if (file) {
+      file.content = content;
+      file.updatedAt = Date.now();
+    }
+    project.sql = content;
+    project.updatedAt = Date.now();
+    this.saveProjects(this.projects);
   }
 
   updateProjectSql(id, sql) {
-    const project = this.projects.find(p => p.id === id);
-    if (project) {
-      project.sql = sql;
-      project.updatedAt = Date.now();
-      this.saveProjects(this.projects);
-    }
+    this.updateActiveFileContent(id, sql);
   }
 
   createProject(name, description = '', initialSql = '') {
     const id = 'proj_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+    const defaultFile = {
+      id: 'file_' + Date.now().toString(36) + '_main',
+      name: 'query.sql',
+      content: initialSql || `-- ${name}\n\nSELECT 'Hello, PostgreSQL!' AS welcome;\n`,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
     const newProject = {
       id,
       name: name || 'Untitled Playground',
       description: description || 'Custom PostgreSQL sandbox',
       isPreset: false,
-      sql: initialSql || `-- ${name}\n\nSELECT 'Hello, PostgreSQL!' AS welcome;\n`,
+      files: [defaultFile],
+      activeFileId: defaultFile.id,
+      sql: defaultFile.content,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
@@ -306,13 +467,21 @@ class ProjectStore {
   duplicateProject(id, activate = false) {
     const source = this.projects.find(p => p.id === id);
     if (!source) return null;
+    normalizeProject(source);
 
     const newId = 'proj_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+    const clonedFiles = source.files.map((f, i) => ({
+      ...f,
+      id: 'file_' + Date.now().toString(36) + '_' + i
+    }));
     const clone = {
       ...source,
       id: newId,
       name: `${source.name} (Copy)`,
       isPreset: false,
+      files: clonedFiles,
+      activeFileId: clonedFiles[0]?.id,
+      sql: clonedFiles[0]?.content || '',
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
@@ -361,6 +530,15 @@ class ProjectStore {
     const starter = STARTER_PROJECTS.find(s => s.id === id);
     const project = this.projects.find(p => p.id === id);
     if (starter && project) {
+      const defaultFile = {
+        id: 'file_' + Date.now().toString(36) + '_main',
+        name: 'query.sql',
+        content: starter.sql,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      project.files = [defaultFile];
+      project.activeFileId = defaultFile.id;
       project.sql = starter.sql;
       project.updatedAt = Date.now();
       this.saveProjects(this.projects);

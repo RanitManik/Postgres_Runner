@@ -12,18 +12,23 @@ import {
   getMonacoInstance,
   setEditorError,
   clearEditorErrors,
-  jumpToEditorLine
+  jumpToEditorLine,
+  switchToFileModel,
+  resetAllFileModels,
+  disposeFileModel
 } from './editor/monacoSetup.js';
 import { ResultsViewer } from './components/resultsViewer.js';
 import { SchemaExplorer } from './components/schemaExplorer.js';
 import { cheatSheet } from './components/cheatSheet.js';
 import { ProjectManager } from './components/projectManager.js';
 import { settingsModal } from './components/settingsModal.js';
+import { EditorTabs } from './components/editorTabs.js';
 import { showToast } from './components/toast.js';
 
 let resultsViewer = null;
 let schemaExplorer = null;
 let projectManager = null;
+let editorTabs = null;
 let saveDebounceTimer = null;
 
 async function initApp() {
@@ -55,7 +60,7 @@ async function initApp() {
   const btnEditorSettings = document.getElementById('btn-editor-settings');
   const btnQuickWrap = document.getElementById('btn-quick-wrap');
   const btnOpenCheatsheet = document.getElementById('btn-open-cheatsheet');
-  const editorFileTitle = document.getElementById('editor-file-title');
+  const editorTabsBar = document.getElementById('editor-tabs-bar');
   const btnClearResults = document.getElementById('btn-clear-results');
 
   // Sidebar Actions
@@ -69,9 +74,6 @@ async function initApp() {
   let activeProject = projectStore.getActiveProject();
   if (headerActiveProjectName) {
     headerActiveProjectName.textContent = activeProject.name;
-  }
-  if (editorFileTitle) {
-    editorFileTitle.textContent = `${activeProject.name.toLowerCase().replace(/\s+/g, '_')}.sql`;
   }
 
   // 3. Initialize Results Viewer with snippet runner and line navigation
@@ -92,18 +94,75 @@ async function initApp() {
   );
   resultsViewer.renderInitialState();
 
-  // 4. Initialize Monaco Editor
-  initMonacoEditor(monacoHost, activeProject.sql, {
+  // 4. Initialize Multi-File Editor Tabs Component
+  editorTabs = new EditorTabs(editorTabsBar, {
+    projectStore,
+    onSelectTab: (fileId) => {
+      const activeFile = projectStore.setActiveFile(activeProject.id, fileId);
+      if (activeFile) {
+        switchToFileModel(activeFile.id, activeFile.content, activeFile.name);
+        editorTabs.render();
+      }
+    },
+    onCreateTab: () => {
+      const newFile = projectStore.createFile(activeProject.id);
+      if (newFile) {
+        switchToFileModel(newFile.id, newFile.content, newFile.name);
+        editorTabs.render();
+        showToast(`Created ${newFile.name}`, 'info', 1200);
+      }
+    },
+    onRenameTab: (fileId, newName) => {
+      try {
+        const renamed = projectStore.renameFile(activeProject.id, fileId, newName);
+        editorTabs.render();
+        showToast(`Renamed to ${renamed.name}`, 'info', 1200);
+      } catch (err) {
+        showToast(err.message, 'warning', 2000);
+        editorTabs.render();
+      }
+    },
+    onCloseTab: (fileId) => {
+      try {
+        const res = projectStore.deleteFile(activeProject.id, fileId);
+        if (res) {
+          disposeFileModel(fileId);
+          if (res.wasActive) {
+            const nextActiveFile = projectStore.getActiveFile(activeProject.id);
+            if (nextActiveFile) {
+              switchToFileModel(nextActiveFile.id, nextActiveFile.content, nextActiveFile.name);
+            }
+          }
+          editorTabs.render();
+          showToast(`Closed ${res.deletedFile.name}`, 'info', 1200);
+        }
+      } catch (err) {
+        showToast(err.message, 'warning', 2000);
+      }
+    }
+  });
+
+  const initialFiles = projectStore.getProjectFiles(activeProject.id);
+  const activeFile = projectStore.getActiveFile(activeProject.id);
+
+  // 5. Initialize Monaco Editor
+  initMonacoEditor(monacoHost, activeFile.content, {
     onRun: (codeToRun) => executeCode(codeToRun),
     onChange: (currentVal) => {
+      if (editorTabs) editorTabs.setSavingState(true);
       clearTimeout(saveDebounceTimer);
       saveDebounceTimer = setTimeout(() => {
-        projectStore.updateProjectSql(activeProject.id, currentVal);
+        projectStore.updateActiveFileContent(activeProject.id, currentVal);
+        if (editorTabs) editorTabs.setSavingState(false);
       }, 400);
     }
   });
 
-  // 5. Wire Editor Toolbar Buttons
+  // Setup initial file models & render tab bar
+  resetAllFileModels(initialFiles, activeFile.id);
+  editorTabs.render();
+
+  // 6. Wire Editor Toolbar Buttons
   if (btnQuickWrap) {
     btnQuickWrap.addEventListener('click', () => {
       editorSettings.toggleWordWrap();
@@ -125,7 +184,7 @@ async function initApp() {
 
   if (btnClear) {
     btnClear.addEventListener('click', () => {
-      if (confirm('Clear the current editor content?')) {
+      if (confirm('Clear editor content?')) {
         setEditorValue('');
         showToast('Editor cleared', 'info');
       }
@@ -134,25 +193,28 @@ async function initApp() {
 
   if (btnClearResults) {
     btnClearResults.addEventListener('click', () => {
-      resultsViewer.renderInitialState();
+      resultsViewer.clear();
       showToast('Results cleared', 'info', 1200);
     });
   }
 
-  // 6. Project Switching Handler
+  // 7. Project Switching Handler
   const handleSwitchProject = async (newProj) => {
     activeProject = newProj;
     if (headerActiveProjectName) {
       headerActiveProjectName.textContent = newProj.name;
     }
-    if (editorFileTitle) {
-      editorFileTitle.textContent = `${newProj.name.toLowerCase().replace(/\s+/g, '_')}.sql`;
-    }
 
     if (projectManager) {
       projectManager.updateActiveTriggerName(newProj.name);
     }
-    setEditorValue(newProj.sql);
+
+    const files = projectStore.getProjectFiles(newProj.id);
+    const targetFile = projectStore.getActiveFile(newProj.id);
+    resetAllFileModels(files, targetFile.id);
+    if (editorTabs) {
+      editorTabs.render();
+    }
 
     if (footerStatus) {
       footerStatus.innerHTML = `<span class="spinner-sm"></span> Switching database...`;
@@ -173,10 +235,15 @@ async function initApp() {
     resultsViewer.renderInitialState();
   };
 
-  // 7. Initialize Project Manager & Dropdown
+  // 8. Initialize Project Manager & Dropdown
   projectManager = new ProjectManager({
     onProjectSwitched: handleSwitchProject,
     onProjectReset: async () => {
+      projectStore.resetProjectToStarter(activeProject.id);
+      const files = projectStore.getProjectFiles(activeProject.id);
+      const targetFile = projectStore.getActiveFile(activeProject.id);
+      resetAllFileModels(files, targetFile.id);
+      if (editorTabs) editorTabs.render();
       await dbEngine.resetDatabase();
       if (schemaExplorer) await schemaExplorer.refresh();
       resultsViewer.renderInitialState();
@@ -186,6 +253,7 @@ async function initApp() {
       if (resetSql !== null) {
         setEditorValue(resetSql);
       }
+      if (editorTabs) editorTabs.render();
     }
   });
 

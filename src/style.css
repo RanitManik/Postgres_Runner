@@ -1189,7 +1189,21 @@ html, body {
 }
 
 /* Toolbars: Exactly 38px continuous border! */
-.editor-pane-toolbar,
+.editor-pane-toolbar {
+  height: 38px;
+  min-height: 38px;
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px 0 0;
+  user-select: none;
+  z-index: 10;
+  overflow: visible;
+}
+
 .results-pane-toolbar {
   height: 38px;
   min-height: 38px;
@@ -1204,7 +1218,190 @@ html, body {
   z-index: 10;
 }
 
-.editor-tab-active,
+/* ==========================================================================
+   IDE Editor Tabs Bar
+   ========================================================================== */
+.editor-tabs-bar {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.editor-tabs-scroll {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  outline: none;
+}
+
+.editor-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.editor-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-hairline);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  white-space: nowrap;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.editor-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.editor-tab.is-active {
+  background: var(--bg-root);
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.editor-tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: var(--accent-blue);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.editor-tab.is-active .editor-tab-icon {
+  opacity: 1;
+}
+
+.editor-tab-saving-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: block;
+}
+
+[data-theme="modern-light"] .editor-tab-saving-dot {
+  background: #0f172a;
+}
+
+.editor-tab-title {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-tab-rename-input {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-surface);
+  border: 1px solid var(--accent-blue);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  padding: 1px 4px;
+  outline: none;
+  width: 100px;
+  box-sizing: border-box;
+}
+
+.editor-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: 4px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all var(--duration-fast);
+}
+
+.editor-tab:hover .editor-tab-close {
+  opacity: 0.85;
+}
+
+.editor-tab-close:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.btn-new-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  margin: auto 4px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--duration-fast);
+}
+
+.btn-new-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Light Theme Overrides for Tabs */
+[data-theme="modern-light"] .editor-tab {
+  background: #f1f5f9;
+  border-right-color: #e2e8f0;
+  color: #64748b;
+}
+
+[data-theme="modern-light"] .editor-tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+[data-theme="modern-light"] .editor-tab.is-active {
+  background: #ffffff;
+  color: #0f172a;
+  border-bottom-color: #0284c7;
+}
+
+[data-theme="modern-light"] .editor-tab-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+[data-theme="modern-light"] .btn-new-tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
 .results-tab-active {
   display: flex;
   align-items: center;
