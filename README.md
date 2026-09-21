@@ -1,29 +1,39 @@
 <div align="center">
 
 <a href="https://postgres-runner.vercel.app">
-  <img src="./public/postgres-logo.svg" width="80" height="80" alt="PostgreSQL Runner Logo" />
+  <img src="./public/postgres-logo.svg" width="76" height="76" alt="PostgreSQL Runner Logo" />
 </a>
 
 # Postgres Runner
 
 **Instant, zero-setup PostgreSQL 16 playground running client-side in your browser via WebAssembly.**
 
-[![Live Demo](https://img.shields.io/badge/Demo-postgres--runner.vercel.app-0284c7?style=flat-square&logo=vercel)](https://postgres-runner.vercel.app)
-[![Engine](https://img.shields.io/badge/PostgreSQL%2016-PGlite%20WASM-336791?style=flat-square&logo=postgresql)](https://github.com/electric-sql/pglite)
-[![Editor](https://img.shields.io/badge/Editor-Monaco-007acc?style=flat-square&logo=visualstudiocode)](https://microsoft.github.io/monaco-editor/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+<p align="center">
+  <a href="https://postgres-runner.vercel.app"><img src="https://img.shields.io/badge/Demo-postgres--runner.vercel.app-0284c7?style=flat-square&logo=vercel" alt="Live Demo" /></a>
+  <a href="https://github.com/electric-sql/pglite"><img src="https://img.shields.io/badge/PostgreSQL%2016-PGlite%20WASM-336791?style=flat-square&logo=postgresql" alt="PostgreSQL 16" /></a>
+  <a href="https://microsoft.github.io/monaco-editor/"><img src="https://img.shields.io/badge/Editor-Monaco-007acc?style=flat-square&logo=visualstudiocode" alt="Monaco Editor" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-3b82f6?style=flat-square" alt="MIT License" /></a>
+</p>
 
-<br />
+<p align="center">
+  <a href="https://postgres-runner.vercel.app"><strong>🚀 Open Live Playground ↗</strong></a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#-key-features">Key Features</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#️-architecture--how-it-works">Architecture</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#️-useful-keyboard-shortcuts">Shortcuts</a>
+  &nbsp;&nbsp;•&nbsp;&nbsp;
+  <a href="#-getting-started-locally">Local Setup</a>
+</p>
 
-[**🚀 Open Live Playground**](https://postgres-runner.vercel.app) • [**✨ Features**](#-key-features) • [**⌨️ Shortcuts**](#️-keyboard-shortcuts) • [**🛠️ Local Setup**](#-getting-started-locally)
-
-<br />
-
-<img src="./public/postgres-preview.png" alt="Postgres Runner Interface Preview" width="100%" style="border-radius: 10px;" />
+<p align="center">
+  <a href="https://postgres-runner.vercel.app">
+    <img src="./public/postgres-preview.png" alt="Postgres Runner Interface Preview" width="840" style="max-width: 100%; border-radius: 10px;" />
+  </a>
+</p>
 
 </div>
-
-<br />
 
 ---
 
