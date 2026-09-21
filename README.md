@@ -73,7 +73,7 @@ Powered by [PGlite](https://github.com/electric-sql/pglite) (Postgres compiled t
   Format unformatted queries via `sql-formatter` (<kbd>⌥⇧F</kbd> / <kbd>Alt+Shift+F</kbd>) and download complete SQL database dumps anytime.
 - **🌓 Dark & Light Modes**  
   High-contrast developer workstation dark theme and a clean Linear-inspired light theme.
-- **🔒 100% Offline & Private**  
+- **🔒 100% Private**  
   Zero tracking, zero analytics, zero external API calls. Everything executes locally on your CPU inside the browser.
 
 ---
